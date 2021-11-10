@@ -14,10 +14,11 @@ fn get_wireguard_output_of_endpoint() -> Option<String>{
     let out = Command::new("wg").output().expect("Failed to execute command: wg");
     let str_out = String::from_utf8(out.stdout).expect("error changed utf8");
     if let Some(idx) = str_out.find("endpoint"){
-        let after_tag = &str_out[idx..];
-        if let Some(ip_begin) = after_tag.find(char::is_numeric){
-            if let Some(ip_end) = after_tag.find(":"){
-                return Some(str_out[idx + ip_begin .. idx + ip_end].to_string());
+        let it = &str_out[idx..];
+        if let Some(idx) = it.find(char::is_numeric){
+            let it = &it[idx..];
+            if let Some(idx) = it.find(":"){
+                return Some(it[..idx].trim().to_string());
             }
         }
     }
@@ -47,7 +48,7 @@ impl MyResolver{
 }
 
 fn run(cfg_name: &str, domain: &str) -> !{
-    const SECONDS: u64 = 5;
+    const SECONDS: u64 = 60 * 2;
     let resolver = MyResolver::new();
     let restart_cmd = format!("wg-quick down {0}; wg-quick up {0}", cfg_name);
     loop{
@@ -84,8 +85,8 @@ fn get_domain_from_wg_conf(cfg_path: &String) -> String{
         let contents = &contents[idx..];
         if let Some(idx) = contents.find("="){
             let contents = &contents[idx + 1..];
-            if let Some(end) = contents.find(":"){
-                return contents[..end].trim().to_string();
+            if let Some(idx) = contents.find(":"){
+                return contents[..idx].trim().to_string();
             }
         }
     }
