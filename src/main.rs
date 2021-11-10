@@ -1,6 +1,7 @@
 /// @author persy
 /// @date 2021/11/10 8:57
 
+use std::path::Path;
 use std::process::Command;
 use std::thread::sleep;
 use std::time::Duration;
@@ -77,8 +78,8 @@ fn parse_args() -> String{
     cfg.to_string()
 }
 
-fn get_domain_from_wg_conf(cfg_name: &String) -> String{
-    let contents = fs::read_to_string(cfg_name).unwrap();
+fn get_domain_from_wg_conf(cfg_path: &String) -> String{
+    let contents = fs::read_to_string(cfg_path).unwrap();
     if let Some(idx) = contents.find("Endpoint"){
         let contents = &contents[idx..];
         if let Some(idx) = contents.find("="){
@@ -88,11 +89,13 @@ fn get_domain_from_wg_conf(cfg_name: &String) -> String{
             }
         }
     }
-    panic!("can't find endpoint domain from wireguard config:{}", cfg_name);
+    panic!("can't find endpoint domain from wireguard config:{}", cfg_path);
 }
 
 fn main() {
-    let cfg_name = parse_args();
-    let domain = get_domain_from_wg_conf(&cfg_name);
-    run(&cfg_name[..], &domain[..]);
+    let cfg_path = parse_args();
+    let domain = get_domain_from_wg_conf(&cfg_path);
+    let path = Path::new(&cfg_path[..]);
+    let file_name = path.file_stem().unwrap();
+    run(file_name.to_str().unwrap(), &domain[..]);
 }
