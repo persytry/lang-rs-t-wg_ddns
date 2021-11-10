@@ -11,7 +11,7 @@ use trust_dns_resolver::config::{ResolverConfig, ResolverOpts};
 use clap::{Arg, App};
 
 fn get_wireguard_output_of_endpoint() -> Option<String>{
-    let out = Command::new("wg show").output().expect("Failed to execute command: wg show");
+    let out = Command::new("wg").output().expect("Failed to execute command: wg");
     let str_out = String::from_utf8(out.stdout).expect("error changed utf8");
     if let Some(idx) = str_out.find("endpoint"){
         let after_tag = &str_out[idx..];
