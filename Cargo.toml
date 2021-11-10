@@ -1,0 +1,16 @@
+[package]
+name = "wg_ddns"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+trust-dns-resolver = "0.20.3"
+clap = "2.33.3"
+
+#[dependencies.libevent-sys]
+#version = "0.2.4"
+#default-features = false
+#features = ["buildtime_bindgen", "pkgconfig", "verbose_build"]
+#features = ["bundled"]
