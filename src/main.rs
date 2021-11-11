@@ -50,13 +50,13 @@ impl MyResolver{
 fn run(cfg_name: &str, domain: &str) -> !{
     const SECONDS: u64 = 60 * 2;
     let resolver = MyResolver::new();
-    let restart_cmd = format!("wg-quick down {0}; wg-quick up {0}", cfg_name);
     loop{
         if let Some(ip) = get_wireguard_output_of_endpoint(){
             if let Some(ip_now) = resolver.gethostbyname(domain){
                 if ip != ip_now{
                     println!("wireguard endpoint old ip is {}, new ip is {}, so restart {}", ip, ip_now, cfg_name);
-                    Command::new(&restart_cmd).output().ok();
+                    Command::new("wg-quick").arg("down").arg(cfg_name).output().ok();
+                    Command::new("wg-quick").arg("up").arg(cfg_name).output().ok();
                 }
             }
         }
