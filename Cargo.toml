@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 trust-dns-resolver = "0.20.3"
 clap = "2.33.3"
+chrono = "0.4.19"
 
 #[dependencies.libevent-sys]
 #version = "0.2.4"
