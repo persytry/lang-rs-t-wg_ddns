@@ -64,19 +64,29 @@ fn run(cfg_name: &str, domain: &str) -> !{
     }
 }
 
-fn parse_args() -> String{
+fn parse_args() -> Option<String>{
     let matches = App::new("wireguard ddns")
                           .version("0.1")
                           .author("persy")
                           .about("auto restart wireguard for ddns")
                           .arg(Arg::with_name("wg_cfg")
                                .short("c")
+                               .long("cfg")
                                .value_name("FILE")
                                .help("set wireguard config path")
                                .takes_value(true))
+                          .arg(Arg::with_name("service")
+                               .short("s")
+                               .long("service")
+                               .help("set enable service when restart system")
+                               .takes_value(false))
                           .get_matches();
     let cfg = matches.value_of("wg_cfg").unwrap_or("/etc/wireguard/wg0.conf");
-    cfg.to_string()
+    if matches.occurrences_of("service") > 0{
+        gen_service_cfg("/lib/systemd/system/wg_ddns.service", &cfg.to_string());
+        return None;
+    }
+    Some(cfg.to_string())
 }
 
 fn get_domain_from_wg_conf(cfg_path: &String) -> String{
@@ -93,10 +103,28 @@ fn get_domain_from_wg_conf(cfg_path: &String) -> String{
     panic!("can't find endpoint domain from wireguard config:{}", cfg_path);
 }
 
+fn gen_service_cfg(service_path: &str, cfg_path: &String){
+    let s = format!(r"[Unit]
+Description=gen wg_ddns service
+After=network.target
+
+[Service]
+User=root
+ExecStart=wg_ddns -c {}
+
+[Install]
+WantedBy=multi-user.target", cfg_path);
+    fs::write(service_path, s).unwrap();
+    Command::new("systemctl").arg("daemon-reload").output().ok();
+    let path = Path::new(&service_path);
+    Command::new("systemctl").arg("enable").arg(path.file_name().unwrap().to_str().unwrap()).output().ok();
+}
+
 fn main() {
-    let cfg_path = parse_args();
-    let domain = get_domain_from_wg_conf(&cfg_path);
-    let path = Path::new(&cfg_path[..]);
-    let file_name = path.file_stem().unwrap();
-    run(file_name.to_str().unwrap(), &domain[..]);
+    if let Some(cfg_path) = parse_args(){
+        let domain = get_domain_from_wg_conf(&cfg_path);
+        let path = Path::new(&cfg_path[..]);
+        let file_name = path.file_stem().unwrap();
+        run(file_name.to_str().unwrap(), &domain[..]);
+    }
 }
